@@ -18,7 +18,7 @@ github：[https://github.com/shineframe/shine_serial](https://github.com/shinefr
 ![](https://i.imgur.com/dHd7VJZ.png)
 
 
-## shine_serial与google protocol buffer性能对比 ##
+## shine_serial与google protocol buffer性能对比 [性能测试源代码](https://github.com/shineframe/shine_serial/tree/master/shine_serial_vs_protobuf_benchmark "性能测试源代码") ##
 
 **场景如下：**
 
