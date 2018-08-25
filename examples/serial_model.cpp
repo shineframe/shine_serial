@@ -1,14 +1,13 @@
 #include <iostream>
 #include "shine_serial.hpp"
 
-using namespace shine;
-
 struct B
 {
     int a;
     double b;
     std::string c;
-    SHINE_SERIAL_MODEL(B, a, b, c);
+    //将类型名称及需要序列化的字段用SHINE_SERIAL包裹
+    SHINE_SERIAL(B, a, b, c);
 };
 
 struct A{
@@ -16,20 +15,21 @@ struct A{
     double b;
     std::string c;
 
+    //此处嵌套上方的结构体B
     std::map<int, B> d;
+
     std::list<int> e;
     std::vector<float> f;
     std::deque<double> g;
     std::forward_list<long> h;
     std::set<std::string> i;
 
-    SHINE_SERIAL_MODEL(A, a, b, c, d, e, f, g, h, i);
+    SHINE_SERIAL(A, a, b, c, d, e, f, g, h, i);
 };
 
 int main(){
 
     A a;
-    auto tmpss = a.serial_encode();
     a.a = 123;
     a.b = 345.567;
     a.c = "hello world!";
@@ -48,10 +48,10 @@ int main(){
     a.f.emplace_back((float)12.34);
     a.f.emplace_back((float)45.67);
 
-    a.g.emplace_back((double)-456.789);
+    a.g.emplace_back((double)456.789);
     a.g.emplace_back((double)78.9);
 
-    a.h.emplace_front(-666);
+    a.h.emplace_front(666);
     a.h.emplace_front(555);
 
     a.i.emplace("A");
@@ -59,11 +59,14 @@ int main(){
     a.i.emplace("C");
 
     //将对象a序列化成字节流
-    auto data = a.serial_encode();
+    auto data = a.shine_serial_encode();
 
     //将字节流反序列化成对象，反序列化后a2与a中数据相同
     A a2;
-    a2.serial_decode(data);
+    a2.shine_serial_decode(data);
+
+    //确定结果
+    std::cout << ((a == a2) ? "success" : "failed") << std::endl;
 
     return 0;
 }
