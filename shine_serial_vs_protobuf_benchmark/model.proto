@@ -1,0 +1,16 @@
+
+message employee{
+	optional string name = 1;//员工名称
+	optional int32 age = 2;//年龄
+	optional bool sex = 3;//性别
+}
+
+message department{
+	optional string name = 1;//部门名称
+	repeated employee employees = 2;//部门员工列表
+}
+
+message company{
+	optional string name = 1;//公司名
+	repeated department departments = 2;//公司部门列表
+}
