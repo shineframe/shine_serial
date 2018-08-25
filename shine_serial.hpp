@@ -1,11 +1,11 @@
  /**
  *****************************************************************************
  *
- *@note shineframe开发框架 https://github.com/shineframe/shineframe
+ *@note shine serial序列化库 https://github.com/shineframe/shine_serial
  *
- *@file SERIAL.hpp
+ *@file shine_serial.hpp
  *
- *@brief 序列化库 -- shine SERIAL
+ *@brief 序列化库 -- shine serial
  *
  *使用SHINE_SERIAL_MODEL宏，只需要一行代码即可完成C++对象序列化/反序列化操作
  *
@@ -160,12 +160,12 @@
 
 #define SHINE_SERIAL_ENCODE_FIELD(field)\
 {\
-    serial_encode_field(this->field, ret);\
+    shine_serial_encode_field(this->field, ret);\
 }
 
 #define SHINE_SERIAL_DECODE_FIELD(field) \
 {\
-        if (!serial_decode_field(this->field, data, len, cost_len)) return false;\
+        if (!shine_serial_decode_field(this->field, data, len, cost_len)) return false;\
         if (cost_len - flag >= size) return true; \
 }
 
@@ -174,33 +174,34 @@
     if (!(a.field == b.field)) return false;\
 }
 
-#define SHINE_SERIAL_MODEL(TYPE, ...) \
+#define SHINE_SERIAL(TYPE, ...) \
+    public:\
 TYPE(){}\
 ~TYPE(){}\
-inline std::string serial_encode() const{\
+inline std::string shine_serial_encode() const{\
     std::string ret;\
-    serial_encode(ret);\
+    shine_serial_encode(ret);\
     return std::move(ret);\
 }\
-inline void serial_encode(std::string &ret) const{\
+inline void shine_serial_encode(std::string &ret) const{\
     std::size_t old_size_flag = ret.size();\
     SHINE_SERIAL_ENCODE(__VA_ARGS__); \
-    serial_encode_size(ret.size() - old_size_flag, ret, false, old_size_flag); \
+    shine_serial_encode_size(ret.size() - old_size_flag, ret, false, old_size_flag); \
     }\
     \
-    inline bool serial_decode(const std::string &data){\
+    inline bool shine_serial_decode(const std::string &data){\
         std::size_t cost_len = 0;\
-        return serial_decode(data.data(), data.size(), cost_len);\
+        return shine_serial_decode(data.data(), data.size(), cost_len);\
     } \
-    inline bool serial_decode(const char *data, const std::size_t len){\
+    inline bool shine_serial_decode(const char *data, const std::size_t len){\
         std::size_t cost_len = 0;\
-        return serial_decode(data, len, cost_len);\
+        return shine_serial_decode(data, len, cost_len);\
     } \
     \
-    inline bool serial_decode(const char *data, const std::size_t len, std::size_t &cost_len){\
+    inline bool shine_serial_decode(const char *data, const std::size_t len, std::size_t &cost_len){\
         if (len - cost_len == 0) return true;\
         std::size_t size = 0; \
-        if (!serial_decode_size(size, data, len, cost_len)) return false; \
+        if (!shine_serial_decode_size(size, data, len, cost_len)) return false; \
         if (size == 0) return true;\
         std::size_t flag = cost_len;\
         if (len - cost_len < size) return false; \
@@ -216,102 +217,13 @@ inline void serial_encode(std::string &ret) const{\
     inline bool operator!=(const TYPE &a, const TYPE &b){\
         return !(a == b);\
     }\
-    inline void serial_encode_field(const TYPE &val, std::string &ret){ return val.serial_encode(ret); }\
-    inline bool serial_decode_field(TYPE &val, const char *data, const std::size_t len, std::size_t &cost_len){\
-    return val.serial_decode(data, len, cost_len);
-
-
-namespace shine
-{
-    namespace serial
-    {
-        enum{
-            e_bool = 0,
-            e_byte = 1,
-            e_integer = 2,
-            e_float = 3,
-            e_double = 4,
-            e_bytes = 5,
-            e_array = 6,
-            e_set = 7,
-            e_map = 8,
-            e_struct = 9,
-        };
-
-        template<typename T>
-        inline void encode_size(std::string &buf, T size){
-            do {
-                char ch = size & ((1 << 7) - 1);
-                if (size >>= 7)
-                    ch |= 0x80;
-
-                buf += ch;
-            } while (size);
-        }
-
-        template<typename T>
-        inline std::size_t decode_size(T &val, const char *data, const std::size_t len){
-            if (len < 1)
-                return 0;
-
-            val = 0;
-            const char *p = data;
-            std::size_t i = 0;
-
-            for (;;)
-            {
-                if ((p[i] & 0x80) == 0x80)
-                {
-                    if (i < len - 1)
-                    {
-                        val += (p[i] & ((1 << 7) - 1)) * (1 << 7 * i);
-                        i++;
-                    }
-                    else
-                        return 0;
-                }
-                else
-                {
-                    val += (p[i] & ((1 << 7) - 1)) * (1 << 7 * i);
-                    return i + 1;
-                }
-            }
-        }
-    }
-
-    struct package_t{
-        std::size_t length = 0;
-        std::size_t type = 0;
-
-        inline std::string encode(){
-            std::string ret;
-
-            serial::encode_size(ret, length);
-            serial::encode_size(ret, type);
-
-            return std::move(ret);
-        }
-
-        inline size_t decode(const char *data, const size_t len){
-            size_t cost_len = serial::decode_size(length, data, len);
-
-            if (cost_len == 0)
-                return 0;
-
-            size_t cost_len2 = serial::decode_size(type, data + cost_len, len - cost_len);
-
-            if (cost_len2 == 0)
-                return 0;
-
-            return cost_len + cost_len2;
-        }
-    };
-
-}
+    inline void shine_serial_encode_field(const TYPE &val, std::string &ret){ return val.shine_serial_encode(ret); }\
+    inline bool shine_serial_decode_field(TYPE &val, const char *data, const std::size_t len, std::size_t &cost_len){\
+    return val.shine_serial_decode(data, len, cost_len);
 
 #define SHINE_SERIAL_DECODE_BASE_CHECK(type) if (len < cost_len + 1) return false;
 
-inline void serial_encode_size(std::size_t len, std::string &ret, bool back = true, std::size_t pos = 0){
+inline void shine_serial_encode_size(std::size_t len, std::string &ret, bool back = true, std::size_t pos = 0){
     do {
         char ch = len & ((1 << 7) - 1);
         if (len >>= 7)
@@ -328,13 +240,13 @@ inline void serial_encode_size(std::size_t len, std::string &ret, bool back = tr
     } while (len);
 }
 
-inline std::string serial_encode_size(std::size_t len){
+inline std::string shine_serial_encode_size(std::size_t len){
     std::string ret;
-    serial_encode_size(len, ret);
+    shine_serial_encode_size(len, ret);
     return std::move(ret);
 }
 
-inline bool serial_decode_size(std::size_t &val, const char *data, const std::size_t len, std::size_t &cost_len){
+inline bool shine_serial_decode_size(std::size_t &val, const char *data, const std::size_t len, std::size_t &cost_len){
     if (len < cost_len + 1) 
         return false;
 
@@ -364,7 +276,7 @@ inline bool serial_decode_size(std::size_t &val, const char *data, const std::si
 }
 
 template<class T>
-void serial_encode_integer(T val, std::string &ret){
+void shine_serial_encode_integer(T val, std::string &ret){
     bool flag = val < 0;
     std::size_t size = ret.size();
     std::size_t value = flag ? -val : val;
@@ -382,7 +294,7 @@ void serial_encode_integer(T val, std::string &ret){
 
 
 template<class T>
-bool serial_decode_integer(T &val, const char *data, const std::size_t len, std::size_t &cost_len){
+bool shine_serial_decode_integer(T &val, const char *data, const std::size_t len, std::size_t &cost_len){
     val = 0;
     const char *p = data + cost_len;
     bool flag = (p[0] & 0x40) == 0x40;
@@ -414,33 +326,33 @@ bool serial_decode_integer(T &val, const char *data, const std::size_t len, std:
     return true;
 }
 
-inline void serial_encode_field(bool val, std::string &ret){
+inline void shine_serial_encode_field(bool val, std::string &ret){
     ret += (char)(val ? '\1' : '\0');
 }
 
-inline bool serial_decode_field(bool &val, const char *data, const std::size_t len, std::size_t &cost_len){
+inline bool shine_serial_decode_field(bool &val, const char *data, const std::size_t len, std::size_t &cost_len){
     SHINE_SERIAL_DECODE_BASE_CHECK(std::serial::e_bool);
 
     val = data[cost_len++] == '\1';
     return true;
 }
 
-inline void serial_encode_field(char val, std::string &ret){
+inline void shine_serial_encode_field(char val, std::string &ret){
     ret += val;
 }
 
-inline bool serial_decode_field(char &val, const char *data, const std::size_t len, std::size_t &cost_len){
+inline bool shine_serial_decode_field(char &val, const char *data, const std::size_t len, std::size_t &cost_len){
     SHINE_SERIAL_DECODE_BASE_CHECK(std::serial::e_byte);
 
     val = data[cost_len++];
     return true;
 }
 
-inline void serial_encode_field(unsigned char val, std::string &ret){
+inline void shine_serial_encode_field(unsigned char val, std::string &ret){
     ret += val;
 }
 
-inline bool serial_decode_field(unsigned char &val, const char *data, const std::size_t len, std::size_t &cost_len){
+inline bool shine_serial_decode_field(unsigned char &val, const char *data, const std::size_t len, std::size_t &cost_len){
     SHINE_SERIAL_DECODE_BASE_CHECK(std::serial::e_byte);
 
     val = data[cost_len++];
@@ -448,17 +360,17 @@ inline bool serial_decode_field(unsigned char &val, const char *data, const std:
 }
 
 #define SHINE_SERIAL_ENCODE_BYTES_FIELD(TYPE) \
-    inline void serial_encode_field(const TYPE &val, std::string &ret){\
-        serial_encode_size(val.size(), ret); \
+    inline void shine_serial_encode_field(const TYPE &val, std::string &ret){\
+        shine_serial_encode_size(val.size(), ret); \
         ret.append(val);\
     }
 
 SHINE_SERIAL_ENCODE_BYTES_FIELD(std::string);
 
 #define SHINE_SERIAL_DECODE_BYTES_FIELD(TYPE) \
-    inline bool serial_decode_field(TYPE &val, const char *data, const std::size_t len, std::size_t &cost_len){\
+    inline bool shine_serial_decode_field(TYPE &val, const char *data, const std::size_t len, std::size_t &cost_len){\
         std::size_t size = 0; \
-        if (!serial_decode_size(size, data, len, cost_len)) return false;\
+        if (!shine_serial_decode_size(size, data, len, cost_len)) return false;\
         if (size + cost_len > len) return false;\
         val.assign(data + cost_len, size); \
         cost_len += size; \
@@ -468,13 +380,13 @@ SHINE_SERIAL_ENCODE_BYTES_FIELD(std::string);
 SHINE_SERIAL_DECODE_BYTES_FIELD(std::string);
 
 #define SHINE_SERIAL_ENCODE_INTEGER_FIELD(TYPE) \
-    inline void serial_encode_field(const TYPE &val, std::string &ret){\
-        return serial_encode_integer(val, ret); \
+    inline void shine_serial_encode_field(const TYPE &val, std::string &ret){\
+        return shine_serial_encode_integer(val, ret); \
     }
 
 #define SHINE_SERIAL_DECODE_INTEGER_FIELD(TYPE) \
-    inline bool serial_decode_field(TYPE &val, const char *data, const std::size_t len, std::size_t &cost_len){\
-        return serial_decode_integer(val, data, len, cost_len); \
+    inline bool shine_serial_decode_field(TYPE &val, const char *data, const std::size_t len, std::size_t &cost_len){\
+        return shine_serial_decode_integer(val, data, len, cost_len); \
     }
 
 SHINE_SERIAL_ENCODE_INTEGER_FIELD(short);
@@ -502,12 +414,12 @@ SHINE_SERIAL_ENCODE_INTEGER_FIELD(unsigned long long);
 SHINE_SERIAL_DECODE_INTEGER_FIELD(unsigned long long);
 
 #define SHINE_SERIAL_ENCODE_FLOAT_FIELD(TYPE)\
-inline void serial_encode_field(const TYPE &val, std::string &ret){\
+inline void shine_serial_encode_field(const TYPE &val, std::string &ret){\
     ret.append((const char*)&val, sizeof(val));\
 }
 
 #define SHINE_SERIAL_DECODE_FLOAT_FIELD(TYPE)\
-inline bool serial_decode_field(TYPE &val, const char *data, const std::size_t len, std::size_t &cost_len){\
+inline bool shine_serial_decode_field(TYPE &val, const char *data, const std::size_t len, std::size_t &cost_len){\
     if (len < cost_len + sizeof(val))\
         return false;\
         \
@@ -527,26 +439,26 @@ SHINE_SERIAL_DECODE_FLOAT_FIELD(long double);
 
 #define SHINE_SERIAL_ENCODE_MAP_FIELD(TYPE) \
     template<typename T1, typename T2>\
-    inline void serial_encode_field(const TYPE<T1, T2> &val, std::string &ret){\
-        serial_encode_size(val.size(), ret); \
+    inline void shine_serial_encode_field(const TYPE<T1, T2> &val, std::string &ret){\
+        shine_serial_encode_size(val.size(), ret); \
         for (auto &iter : val)\
         {\
-            serial_encode_field(iter.first, ret); \
-            serial_encode_field(iter.second, ret); \
+            shine_serial_encode_field(iter.first, ret); \
+            shine_serial_encode_field(iter.second, ret); \
         }\
     }
 
 #define SHINE_SERIAL_DECODE_MAP_FIELD(TYPE) \
     template<typename T1, typename T2>\
-    inline bool serial_decode_field(TYPE<T1, T2> &val, const char *data, const std::size_t len, std::size_t &cost_len){\
+    inline bool shine_serial_decode_field(TYPE<T1, T2> &val, const char *data, const std::size_t len, std::size_t &cost_len){\
         std::size_t size = 0; \
-        if (!serial_decode_size(size, data, len, cost_len)) return false; \
+        if (!shine_serial_decode_size(size, data, len, cost_len)) return false; \
         for (std::size_t i = 0; i < size; i++)\
         {\
             T1 k;\
-            if (!serial_decode_field(k, data, len, cost_len)) return false;\
+            if (!shine_serial_decode_field(k, data, len, cost_len)) return false;\
             T2 v;\
-            if (!serial_decode_field(v, data, len, cost_len)) return false;\
+            if (!shine_serial_decode_field(v, data, len, cost_len)) return false;\
             val.emplace(std::move(k), std::move(v));\
         }\
         return true; \
@@ -562,20 +474,20 @@ SHINE_SERIAL_DECODE_MAP_FIELD(std::unordered_map);
 
 #define SHINE_SERIAL_ENCODE_ARRAY_FIELD(TYPE) \
     template<typename T>\
-    inline void serial_encode_field(const TYPE<T> &val, std::string &ret){\
-        serial_encode_size(val.size(), ret); \
-        for (auto &iter : val) serial_encode_field(iter, ret); \
+    inline void shine_serial_encode_field(const TYPE<T> &val, std::string &ret){\
+        shine_serial_encode_size(val.size(), ret); \
+        for (auto &iter : val) shine_serial_encode_field(iter, ret); \
     }
 
 #define SHINE_SERIAL_DECODE_ARRAY_FIELD(TYPE) \
     template<typename T>\
-    inline bool serial_decode_field(TYPE<T> &val, const char *data, const std::size_t len, std::size_t &cost_len){\
+    inline bool shine_serial_decode_field(TYPE<T> &val, const char *data, const std::size_t len, std::size_t &cost_len){\
         std::size_t size = 0; \
-        if (!serial_decode_size(size, data, len, cost_len)) return false; \
+        if (!shine_serial_decode_size(size, data, len, cost_len)) return false; \
         val.resize(size);\
         for (std::size_t i = 0; i < size; i++)\
         {\
-            if (!serial_decode_field(val[i], data, len, cost_len)) return false; \
+            if (!shine_serial_decode_field(val[i], data, len, cost_len)) return false; \
         }\
         return true; \
     }
@@ -587,49 +499,49 @@ SHINE_SERIAL_ENCODE_ARRAY_FIELD(std::deque);
 SHINE_SERIAL_DECODE_ARRAY_FIELD(std::deque);
 
 template<typename T>
-inline void serial_encode_field(const std::list<T> &val, std::string &ret){
-    serial_encode_size(val.size(), ret); 
+inline void shine_serial_encode_field(const std::list<T> &val, std::string &ret){
+    shine_serial_encode_size(val.size(), ret); 
     for (auto &iter : val) {
-        serial_encode_field(iter, ret);
+        shine_serial_encode_field(iter, ret);
     }
 }
 
 template<typename T>
-inline bool serial_decode_field(std::list<T> &val, const char *data, const std::size_t len, std::size_t &cost_len){
+inline bool shine_serial_decode_field(std::list<T> &val, const char *data, const std::size_t len, std::size_t &cost_len){
     std::size_t size = 0;
-    if (!serial_decode_size(size, data, len, cost_len)) return false;
+    if (!shine_serial_decode_size(size, data, len, cost_len)) return false;
     val.resize(size);
     auto iter = val.begin();
     for (std::size_t i = 0; i < size; i++)
     {
-        if (!serial_decode_field(*iter++, data, len, cost_len)) return false;
+        if (!shine_serial_decode_field(*iter++, data, len, cost_len)) return false;
     }
     return true;
 }
 
 
 template<typename T>
-inline void serial_encode_field(const std::forward_list<T> &val, std::string &ret){
+inline void shine_serial_encode_field(const std::forward_list<T> &val, std::string &ret){
         std::size_t begin = ret.size();
         std::size_t size = 0;
         for (auto &iter : val) {
             std::string tmp;
-            serial_encode_field(iter, tmp);
+            shine_serial_encode_field(iter, tmp);
             ret.insert(begin, std::move(tmp));
             size++;
         }
 
-        serial_encode_size(size, ret, false, begin);
+        shine_serial_encode_size(size, ret, false, begin);
 }
 
 template<typename T>
-inline bool serial_decode_field(std::forward_list<T> &val, const char *data, const std::size_t len, std::size_t &cost_len){
+inline bool shine_serial_decode_field(std::forward_list<T> &val, const char *data, const std::size_t len, std::size_t &cost_len){
         std::size_t size = 0;
-        if (!serial_decode_size(size, data, len, cost_len)) return false;
+        if (!shine_serial_decode_size(size, data, len, cost_len)) return false;
         for (std::size_t i = 0; i < size; i++)
         {
             T v;
-            if (!serial_decode_field(v, data, len, cost_len)) return false;
+            if (!shine_serial_decode_field(v, data, len, cost_len)) return false;
             val.emplace_front(std::move(v)); 
         }
         return true; 
@@ -637,20 +549,20 @@ inline bool serial_decode_field(std::forward_list<T> &val, const char *data, con
 
 #define SHINE_SERIAL_ENCODE_SET_FIELD(TYPE) \
     template<typename T>\
-    inline void serial_encode_field(const TYPE<T> &val, std::string &ret){\
-        ret += std::move(serial_encode_size(val.size())); \
-        for (auto &iter : val) serial_encode_field(iter, ret); \
+    inline void shine_serial_encode_field(const TYPE<T> &val, std::string &ret){\
+        ret += std::move(shine_serial_encode_size(val.size())); \
+        for (auto &iter : val) shine_serial_encode_field(iter, ret); \
     }
 
 #define SHINE_SERIAL_DECODE_SET_FIELD(TYPE) \
     template<typename T>\
-    inline bool serial_decode_field(TYPE<T> &val, const char *data, const std::size_t len, std::size_t &cost_len){\
+    inline bool shine_serial_decode_field(TYPE<T> &val, const char *data, const std::size_t len, std::size_t &cost_len){\
         std::size_t size = 0; \
-        if (!serial_decode_size(size, data, len, cost_len)) return false; \
+        if (!shine_serial_decode_size(size, data, len, cost_len)) return false; \
         for (std::size_t i = 0; i < size; i++)\
         {\
             T v;\
-            if (!serial_decode_field(v, data, len, cost_len)) return false;\
+            if (!shine_serial_decode_field(v, data, len, cost_len)) return false;\
             val.emplace(std::move(v)); \
         }\
         return true; \
