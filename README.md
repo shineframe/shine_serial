@@ -4,7 +4,7 @@
 [![Open Source Love](https://badges.frapsoft.com/os/v1/open-source.svg?v=103)](https://github.com/ellerbrock/open-source-badge/)
 [![stable](http://badges.github.io/stability-badges/dist/stable.svg)](http://github.com/badges/stability-badges)[![Build Status](https://travis-ci.com/shineframe/shine_serial.svg?branch=master)](https://travis-ci.com/shineframe/shineframe)
 
-## 一、简述 ## 
+## 一、简述 ##
 shine serial 媲美protobuf的强大序列化/反序列化工具
 
 支持c++原生对象的序列化与反序列化，是网络自定义协议格式应用的开发利器。
@@ -17,8 +17,16 @@ github：[https://github.com/shineframe/shine_serial](https://github.com/shinefr
 
 ![](https://i.imgur.com/dHd7VJZ.png)
 
+## shine serial与google protocol buffer综合对比##
+|  | google protobuf | shine serial | |
+| ------ | ------ | ------ | ----- |
+| 开发语言 | C++ | C++ | |
+| 集成方式 | 编译链接 | 直接包含头文件 | |
+| 模型定义 | IDL文件 | 直接在结构体/类中引用宏 | |
+|||||
 
-## shine_serial与google protocol buffer性能对比 [性能测试源代码](https://github.com/shineframe/shine_serial/tree/master/shine_serial_vs_protobuf_benchmark "性能测试源代码") ##
+
+## shine serial与google protocol buffer性能对比 [性能测试源代码](https://github.com/shineframe/shine_serial/tree/master/shine_serial_vs_protobuf_benchmark "性能测试源代码") ##
 
 **场景如下：**
 

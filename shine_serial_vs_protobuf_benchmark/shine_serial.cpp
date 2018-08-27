@@ -1,12 +1,10 @@
 #include <iostream>
 #include <chrono>
-#include "shine_serial.hpp"
-
-using namespace shine;
+#include "shine_serial/shine_serial.hpp"
 
 struct employee{
     std::string name;//员工名称
-    int32 age;//年龄
+    int age;//年龄
     bool sex;//性别
     SHINE_SERIAL(employee, name, age, sex);
 }
@@ -87,7 +85,7 @@ int main(){
         unsigned long long decode_end = get_timestamp();
 
 
-        std::cout << "shine serial result : " << (L1.serial_encode() == clone.serial_encode()) << std::endl;
+        std::cout << "shine serial result : " << (bool)(L1 == clone) << std::endl;
         std::cout << "shine serial encode total data size : " << total_data_size << std::endl;
         std::cout << "shine serial encode cost : " << encode_end - encode_begin << " ms" << std::endl;
         std::cout << "shine serial decode cost : " << decode_end - decode_begin << " ms, error : " << error << std::endl << std::endl;

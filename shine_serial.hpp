@@ -180,6 +180,7 @@ TYPE(){}\
 ~TYPE(){}\
 inline std::string shine_serial_encode() const{\
     std::string ret;\
+    ret.reserve(1024);\
     shine_serial_encode(ret);\
     return std::move(ret);\
 }\
