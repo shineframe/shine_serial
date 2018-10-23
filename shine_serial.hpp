@@ -257,7 +257,7 @@ inline bool shine_serial_decode_size(std::size_t &val, const char *data, const s
         {
             if (i < len - cost_len - 1)
             {
-                val |= (size_t)(p[i] & 0x7F) << (7 *  i);
+                val |= (std::size_t)(p[i] & 0x7F) << (7 * i);
                 i++;
             }
             else
@@ -265,7 +265,7 @@ inline bool shine_serial_decode_size(std::size_t &val, const char *data, const s
         }
         else
         {
-            val |= (size_t)(p[i] & 0x7F) << (7 * i);
+            val |= (std::size_t)(p[i] & 0x7F) << (7 * i);
             cost_len += i + 1;
             return true;
         }
@@ -303,7 +303,7 @@ bool shine_serial_decode_integer(T &val, const char *data, const std::size_t len
         {
             if (i < len - cost_len - 1)
             {
-                val |= (size_t)(p[i] & 0x3F) << (6 * i);
+                val |= (std::size_t)(p[i] & 0x3F) << (6 * i);
                 i++;
             }
             else
@@ -311,7 +311,7 @@ bool shine_serial_decode_integer(T &val, const char *data, const std::size_t len
         }
         else
         {
-            val |= (size_t)(p[i] & 0x3F) << (6 * i);
+            val |= (std::size_t)(p[i] & 0x3F) << (6 * i);
             break;
         }
     }
