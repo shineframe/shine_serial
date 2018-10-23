@@ -7,7 +7,7 @@
  *
  *@brief 序列化库 -- shine serial
  *
- *使用SHINE_SERIAL_MODEL宏，只需要一行代码即可完成C++对象序列化/反序列化操作
+ *使用SHINE_SERIAL宏，只需要一行代码即可完成C++对象序列化/反序列化操作
  *
  *@todo 
  *
@@ -231,13 +231,9 @@ inline void shine_serial_encode_size(std::size_t len, std::string &ret, bool bac
             ch |= 0x80;
 
         if (back) 
-        {
             ret += ch;
-        }
         else
-        {
             ret.insert(pos++, 1, ch);
-        }
     } while (len);
 }
 
@@ -252,16 +248,16 @@ inline bool shine_serial_decode_size(std::size_t &val, const char *data, const s
         return false;
 
     val = 0;
-    const char *p = data + cost_len;
+    const unsigned char *p = (const unsigned char *)data + cost_len;
     std::size_t i = 0;
 
     for (;;)
     {
-        if ((p[i] & 0x80) == 0x80)
+        if (p[i] & 0x80)
         {
             if (i < len - cost_len - 1)
             {
-                val += (p[i] & ((1 << 7) - 1)) * (1 << 7 * i);
+                val |= (size_t)(p[i] & 0x7F) << (7 *  i);
                 i++;
             }
             else
@@ -269,7 +265,7 @@ inline bool shine_serial_decode_size(std::size_t &val, const char *data, const s
         }
         else
         {
-            val += (p[i] & ((1 << 7) - 1)) * (1 << 7 * i);
+            val |= (size_t)(p[i] & 0x7F) << (7 * i);
             cost_len += i + 1;
             return true;
         }
@@ -282,7 +278,7 @@ void shine_serial_encode_integer(T val, std::string &ret){
     std::size_t size = ret.size();
     std::size_t value = flag ? -val : val;
     do {
-        char ch = value & ((1 << 6) - 1);
+        unsigned char ch = value & 0x3F;
         if (value >>= 6)
             ch |= 0x80;
 
@@ -297,17 +293,17 @@ void shine_serial_encode_integer(T val, std::string &ret){
 template<class T>
 bool shine_serial_decode_integer(T &val, const char *data, const std::size_t len, std::size_t &cost_len){
     val = 0;
-    const char *p = data + cost_len;
-    bool flag = (p[0] & 0x40) == 0x40;
+    const unsigned char *p = (const unsigned char *)data + cost_len;
+    bool flag = (p[0] & 0x40) > 0;
     std::size_t i = 0;
 
     for (;;)
     {
-        if ((p[i] & 0x80) == 0x80)
+        if (p[i] & 0x80)
         {
             if (i < len - cost_len - 1)
             {
-                val += (p[i] & ((1 << 6) - 1)) * (1 << 6 * i);
+                val |= (size_t)(p[i] & 0x3F) << (6 * i);
                 i++;
             }
             else
@@ -315,7 +311,7 @@ bool shine_serial_decode_integer(T &val, const char *data, const std::size_t len
         }
         else
         {
-            val += (p[i] & ((1 << 6) - 1)) * (1 << 6 * i);
+            val |= (size_t)(p[i] & 0x3F) << (6 * i);
             break;
         }
     }
