@@ -253,18 +253,16 @@ inline bool shine_serial_decode_size(std::size_t &val, const char *data, const s
 
     for (;;)
     {
-        if (i < len - cost_len - 1) {
-            val |= (std::size_t)(p[i] & 0x7F) << (7 * i);
-            if (p[i] & 0x80)
-                i++;
-            else
-                break;
+        val |= (std::size_t)(p[i] & 0x7F) << (7 * i);
+        if (p[i++] & 0x80) {
+            if (i >= len - cost_len)
+                return false;
         }
         else {
-            return false;
+            break;
         }
     }
-    cost_len += i + 1;
+    cost_len += i;
     return true;
 }
 
@@ -274,8 +272,8 @@ void shine_serial_encode_integer(T val, std::string &ret){
     std::size_t size = ret.size();
     std::size_t value = flag ? -val : val;
     do {
-        unsigned char ch = value & (ret.size() == size ? 0x3F : 0x7F);
-        if (value >>= (ret.size() == size ? 6 : 7))
+        unsigned char ch = value & 0x3F;
+        if (value >>= 6)
             ch |= 0x80;
 
         ret += ch;
@@ -288,6 +286,9 @@ void shine_serial_encode_integer(T val, std::string &ret){
 
 template<class T>
 bool shine_serial_decode_integer(T &val, const char *data, const std::size_t len, std::size_t &cost_len){
+    if (len - cost_len < 1)
+        return false;
+
     val = 0;
     const unsigned char *p = (const unsigned char *)data + cost_len;
     bool flag = (p[0] & 0x40) > 0;
@@ -295,38 +296,20 @@ bool shine_serial_decode_integer(T &val, const char *data, const std::size_t len
 
     for (;;)
     {
-        if (i < len - cost_len - 1) {
-            val |= (std::size_t)(p[i] & (i ? 0x3F : 0x7F)) << ((i ? 6 : 7) * i);
-            if (p[i] & 0x80)
-                i++;
-            else
-                break;
+        val |= (std::size_t)(p[i] & 0x3F) << (i * 6);
+        if (p[i++] & 0x80) {
+            if (i >= len - cost_len)
+                return false;
         }
         else {
-            return false;
+            break;
         }
-
-//         if (p[i] & 0x80)
-//         {
-//             if (i < len - cost_len - 1)
-//             {
-//                 val |= (std::size_t)(p[i] & 0x3F) << (6 * i);
-//                 i++;
-//             }
-//             else
-//                 return false;
-//         }
-//         else
-//         {
-//             val |= (std::size_t)(p[i] & 0x3F) << (6 * i);
-//             break;
-//         }
     }
 
     if (flag)
         val = -val;
 
-    cost_len += i + 1;
+    cost_len += i;
     return true;
 }
 
