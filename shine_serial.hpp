@@ -253,23 +253,19 @@ inline bool shine_serial_decode_size(std::size_t &val, const char *data, const s
 
     for (;;)
     {
-        if (p[i] & 0x80)
-        {
-            if (i < len - cost_len - 1)
-            {
-                val |= (std::size_t)(p[i] & 0x7F) << (7 * i);
-                i++;
-            }
-            else
-                return false;
-        }
-        else
-        {
+        if (i < len - cost_len - 1) {
             val |= (std::size_t)(p[i] & 0x7F) << (7 * i);
-            cost_len += i + 1;
-            return true;
+            if (p[i] & 0x80)
+                i++;
+            else
+                break;
+        }
+        else {
+            return false;
         }
     }
+    cost_len += i + 1;
+    return true;
 }
 
 template<class T>
@@ -278,8 +274,8 @@ void shine_serial_encode_integer(T val, std::string &ret){
     std::size_t size = ret.size();
     std::size_t value = flag ? -val : val;
     do {
-        unsigned char ch = value & 0x3F;
-        if (value >>= 6)
+        unsigned char ch = value & (ret.size() == size ? 0x3F : 0x7F);
+        if (value >>= (ret.size() == size ? 6 : 7))
             ch |= 0x80;
 
         ret += ch;
@@ -299,21 +295,32 @@ bool shine_serial_decode_integer(T &val, const char *data, const std::size_t len
 
     for (;;)
     {
-        if (p[i] & 0x80)
-        {
-            if (i < len - cost_len - 1)
-            {
-                val |= (std::size_t)(p[i] & 0x3F) << (6 * i);
+        if (i < len - cost_len - 1) {
+            val |= (std::size_t)(p[i] & (i ? 0x3F : 0x7F)) << ((i ? 6 : 7) * i);
+            if (p[i] & 0x80)
                 i++;
-            }
             else
-                return false;
+                break;
         }
-        else
-        {
-            val |= (std::size_t)(p[i] & 0x3F) << (6 * i);
-            break;
+        else {
+            return false;
         }
+
+//         if (p[i] & 0x80)
+//         {
+//             if (i < len - cost_len - 1)
+//             {
+//                 val |= (std::size_t)(p[i] & 0x3F) << (6 * i);
+//                 i++;
+//             }
+//             else
+//                 return false;
+//         }
+//         else
+//         {
+//             val |= (std::size_t)(p[i] & 0x3F) << (6 * i);
+//             break;
+//         }
     }
 
     if (flag)
